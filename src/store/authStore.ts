@@ -1,15 +1,20 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User } from '../types';
-import { mockUsers } from './mockData';
+import { supabase } from '../lib/supabase';
+import { authService, type Profile } from '../services/auth';
 
 interface AuthState {
-  user: User | null;
+  user: Profile | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
+  
+  // Actions
+  initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (username: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
-  updateProfile: (updates: Partial<User>) => void;
+  logout: () => Promise<void>;
+  updateProfile: (updates: { username?: string; avatar?: string; bio?: string }) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -17,67 +22,113 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       isAuthenticated: false,
+      isLoading: true,
 
-      login: async (email: string, _password: string) => {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const user = mockUsers.find((u) => u.email === email);
-        if (user) {
-          set({ user, isAuthenticated: true });
-          return { success: true };
-        }
-        return { success: false, error: 'Invalid email or password' };
-      },
-
-      register: async (username: string, email: string, _password: string) => {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        const existingUser = mockUsers.find((u) => u.email === email);
-        if (existingUser) {
-          return { success: false, error: 'Email already registered' };
-        }
-
-        const newUser: User = {
-          id: `user-${Date.now()}`,
-          username,
-          email,
-          role: 'player',
-          createdAt: new Date().toISOString(),
-          stats: {
-            tournamentsJoined: 0,
-            tournamentsCreated: 0,
-            wins: 0,
-            losses: 0,
-          },
-        };
-
-        mockUsers.push(newUser);
-        set({ user: newUser, isAuthenticated: true });
-        return { success: true };
-      },
-
-      logout: () => {
-        set({ user: null, isAuthenticated: false });
-      },
-
-      updateProfile: (updates: Partial<User>) => {
-        const currentUser = get().user;
-        if (currentUser) {
-          const updatedUser = { ...currentUser, ...updates };
-          set({ user: updatedUser });
+      initialize: async () => {
+        try {
+          const session = await authService.getSession();
           
-          // Update in mock data
-          const index = mockUsers.findIndex((u) => u.id === currentUser.id);
-          if (index !== -1) {
-            mockUsers[index] = updatedUser;
+          if (session?.user) {
+            const profile = await authService.getProfile(session.user.id);
+            set({ user: profile, isAuthenticated: !!profile, isLoading: false });
+          } else {
+            set({ user: null, isAuthenticated: false, isLoading: false });
           }
+
+          // Listen for auth changes
+          supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session?.user) {
+              const profile = await authService.getProfile(session.user.id);
+              set({ user: profile, isAuthenticated: !!profile });
+            } else if (event === 'SIGNED_OUT') {
+              set({ user: null, isAuthenticated: false });
+            }
+          });
+        } catch (error) {
+          console.error('Auth initialization error:', error);
+          set({ user: null, isAuthenticated: false, isLoading: false });
+        }
+      },
+
+      login: async (email: string, password: string) => {
+        try {
+          const { user } = await authService.signIn(email, password);
+          
+          if (user) {
+            const profile = await authService.getProfile(user.id);
+            set({ user: profile, isAuthenticated: true });
+            return { success: true };
+          }
+          
+          return { success: false, error: 'Login failed' };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Invalid email or password';
+          return { success: false, error: message };
+        }
+      },
+
+      register: async (username: string, email: string, password: string) => {
+        try {
+          const { user } = await authService.signUp(email, password, username);
+          
+          if (user) {
+            // Profile is created automatically via trigger, but we need to wait a moment
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            const profile = await authService.getProfile(user.id);
+            set({ user: profile, isAuthenticated: true });
+            return { success: true };
+          }
+          
+          return { success: false, error: 'Registration failed' };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Registration failed';
+          return { success: false, error: message };
+        }
+      },
+
+      logout: async () => {
+        try {
+          await authService.signOut();
+          set({ user: null, isAuthenticated: false });
+        } catch (error) {
+          console.error('Logout error:', error);
+          // Still clear local state even if API call fails
+          set({ user: null, isAuthenticated: false });
+        }
+      },
+
+      updateProfile: async (updates) => {
+        const currentUser = get().user;
+        if (!currentUser) return;
+
+        try {
+          await authService.updateProfile(currentUser.id, updates);
+          const updatedProfile = await authService.getProfile(currentUser.id);
+          set({ user: updatedProfile });
+        } catch (error) {
+          console.error('Profile update error:', error);
+          throw error;
+        }
+      },
+
+      refreshProfile: async () => {
+        const currentUser = get().user;
+        if (!currentUser) return;
+
+        try {
+          const profile = await authService.getProfile(currentUser.id);
+          set({ user: profile });
+        } catch (error) {
+          console.error('Profile refresh error:', error);
         }
       },
     }),
     {
       name: 'auth-storage',
+      partialize: (state) => ({ 
+        // Only persist minimal data, full profile loaded on init
+        isAuthenticated: state.isAuthenticated 
+      }),
     }
   )
 );
-

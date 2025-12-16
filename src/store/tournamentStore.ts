@@ -1,29 +1,40 @@
 import { create } from 'zustand';
-import type { Tournament, Match, FilterState, CreateTournamentData } from '../types';
-import { mockTournaments, mockMatches } from './mockData';
+import { tournamentService, type Tournament, type CreateTournamentInput } from '../services/tournaments';
+import type { FilterState } from '../types';
+
+interface TournamentCache {
+  tournament: Tournament | null;
+  participants: Array<{ user_id: string; profile: { id: string; username: string; avatar?: string } }>;
+  timestamp: number;
+}
 
 interface TournamentState {
   tournaments: Tournament[];
-  matches: Match[];
+  isLoading: boolean;
+  error: string | null;
   filters: FilterState;
+  prefetchCache: Map<string, TournamentCache>;
   
   // Actions
   setFilter: (key: keyof FilterState, value: string) => void;
   resetFilters: () => void;
-  getFilteredTournaments: () => Tournament[];
-  getTournamentById: (id: string) => Tournament | undefined;
-  getMatchesByTournament: (tournamentId: string) => Match[];
-  getUserTournaments: (userId: string) => { created: Tournament[]; joined: Tournament[] };
+  
+  // Data fetching
+  fetchTournaments: () => Promise<void>;
+  getTournamentById: (id: string) => Promise<Tournament | null>;
+  getUserTournaments: (userId: string) => Promise<{ created: Tournament[]; joined: Tournament[] }>;
+  prefetchTournament: (id: string) => Promise<void>;
+  getCachedTournament: (id: string) => TournamentCache | null;
   
   // Tournament actions
-  createTournament: (data: CreateTournamentData, organizerId: string, organizerName: string) => Tournament;
-  updateTournament: (id: string, updates: Partial<Tournament>) => void;
-  deleteTournament: (id: string) => void;
-  joinTournament: (tournamentId: string, userId: string) => { success: boolean; error?: string };
-  leaveTournament: (tournamentId: string, userId: string) => void;
+  createTournament: (data: CreateTournamentInput, organizerId: string) => Promise<Tournament>;
+  updateTournament: (id: string, updates: Partial<CreateTournamentInput>) => Promise<void>;
+  deleteTournament: (id: string) => Promise<void>;
+  joinTournament: (tournamentId: string, userId: string) => Promise<{ success: boolean; error?: string }>;
+  leaveTournament: (tournamentId: string, userId: string) => Promise<void>;
   
   // Match actions
-  updateMatchResult: (matchId: string, score1: number, score2: number, winnerId: string) => void;
+  updateMatchResult: (matchId: string, score1: number, score2: number, winnerId: string) => Promise<void>;
 }
 
 const defaultFilters: FilterState = {
@@ -35,157 +46,163 @@ const defaultFilters: FilterState = {
 };
 
 export const useTournamentStore = create<TournamentState>((set, get) => ({
-  tournaments: [...mockTournaments],
-  matches: [...mockMatches],
+  tournaments: [],
+  isLoading: false,
+  error: null,
   filters: defaultFilters,
+  prefetchCache: new Map(),
 
   setFilter: (key, value) => {
     set((state) => ({
       filters: { ...state.filters, [key]: value },
     }));
+    // Refetch with new filters
+    get().fetchTournaments();
   },
 
   resetFilters: () => {
     set({ filters: defaultFilters });
+    get().fetchTournaments();
   },
 
-  getFilteredTournaments: () => {
-    const { tournaments, filters } = get();
+  fetchTournaments: async () => {
+    const { filters } = get();
+    set({ isLoading: true, error: null });
     
-    return tournaments.filter((tournament) => {
-      if (filters.search && !tournament.name.toLowerCase().includes(filters.search.toLowerCase()) &&
-          !tournament.game.toLowerCase().includes(filters.search.toLowerCase())) {
-        return false;
-      }
-      if (filters.game && tournament.game !== filters.game) {
-        return false;
-      }
-      if (filters.platform !== 'all' && tournament.platform !== filters.platform) {
-        return false;
-      }
-      if (filters.region !== 'all' && tournament.region !== filters.region) {
-        return false;
-      }
-      if (filters.status !== 'all' && tournament.status !== filters.status) {
-        return false;
-      }
-      return true;
-    });
-  },
-
-  getTournamentById: (id) => {
-    return get().tournaments.find((t) => t.id === id);
-  },
-
-  getMatchesByTournament: (tournamentId) => {
-    return get().matches.filter((m) => m.tournamentId === tournamentId);
-  },
-
-  getUserTournaments: (userId) => {
-    const { tournaments } = get();
-    return {
-      created: tournaments.filter((t) => t.organizerId === userId),
-      joined: tournaments.filter((t) => t.participants.includes(userId)),
-    };
-  },
-
-  createTournament: (data, organizerId, organizerName) => {
-    const newTournament: Tournament = {
-      id: `tournament-${Date.now()}`,
-      ...data,
-      organizerId,
-      organizerName,
-      status: 'upcoming',
-      currentParticipants: 0,
-      createdAt: new Date().toISOString(),
-      participants: [],
-    };
-
-    set((state) => ({
-      tournaments: [newTournament, ...state.tournaments],
-    }));
-
-    return newTournament;
-  },
-
-  updateTournament: (id, updates) => {
-    set((state) => ({
-      tournaments: state.tournaments.map((t) =>
-        t.id === id ? { ...t, ...updates } : t
-      ),
-    }));
-  },
-
-  deleteTournament: (id) => {
-    set((state) => ({
-      tournaments: state.tournaments.filter((t) => t.id !== id),
-      matches: state.matches.filter((m) => m.tournamentId !== id),
-    }));
-  },
-
-  joinTournament: (tournamentId, userId) => {
-    const tournament = get().getTournamentById(tournamentId);
-    
-    if (!tournament) {
-      return { success: false, error: 'Tournament not found' };
+    try {
+      const tournaments = await tournamentService.getTournaments({
+        game: filters.game || undefined,
+        platform: filters.platform,
+        region: filters.region,
+        status: filters.status,
+        search: filters.search || undefined,
+      });
+      set({ tournaments, isLoading: false });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to fetch tournaments';
+      set({ error: message, isLoading: false });
     }
-    
-    if (tournament.participants.includes(userId)) {
-      return { success: false, error: 'Already registered' };
+  },
+
+  getTournamentById: async (id: string) => {
+    try {
+      return await tournamentService.getTournament(id);
+    } catch (error) {
+      console.error('Error fetching tournament:', error);
+      return null;
     }
+  },
+
+  prefetchTournament: async (id: string) => {
+    const cache = get().prefetchCache;
+    const cached = cache.get(id);
     
-    if (tournament.currentParticipants >= tournament.maxParticipants) {
-      return { success: false, error: 'Tournament is full' };
-    }
-    
-    if (tournament.status !== 'upcoming') {
-      return { success: false, error: 'Registration is closed' };
+    // Don't refetch if cached and less than 30 seconds old
+    if (cached && Date.now() - cached.timestamp < 30000) {
+      return;
     }
 
-    set((state) => ({
-      tournaments: state.tournaments.map((t) =>
-        t.id === tournamentId
-          ? {
-              ...t,
-              participants: [...t.participants, userId],
-              currentParticipants: t.currentParticipants + 1,
-            }
-          : t
-      ),
-    }));
+    try {
+      const [tournamentData, participantsData] = await Promise.all([
+        tournamentService.getTournament(id),
+        tournamentService.getParticipants(id),
+      ]);
 
-    return { success: true };
+      cache.set(id, {
+        tournament: tournamentData,
+        participants: participantsData as Array<{ user_id: string; profile: { id: string; username: string; avatar?: string } }>,
+        timestamp: Date.now(),
+      });
+
+      set({ prefetchCache: new Map(cache) });
+    } catch (error) {
+      console.error('Error prefetching tournament:', error);
+    }
   },
 
-  leaveTournament: (tournamentId, userId) => {
-    set((state) => ({
-      tournaments: state.tournaments.map((t) =>
-        t.id === tournamentId
-          ? {
-              ...t,
-              participants: t.participants.filter((p) => p !== userId),
-              currentParticipants: Math.max(0, t.currentParticipants - 1),
-            }
-          : t
-      ),
-    }));
+  getCachedTournament: (id: string) => {
+    const cache = get().prefetchCache;
+    return cache.get(id) || null;
   },
 
-  updateMatchResult: (matchId, score1, score2, winnerId) => {
-    set((state) => ({
-      matches: state.matches.map((m) =>
-        m.id === matchId
-          ? {
-              ...m,
-              participant1: m.participant1 ? { ...m.participant1, score: score1 } : null,
-              participant2: m.participant2 ? { ...m.participant2, score: score2 } : null,
-              winnerId,
-              status: 'completed',
-              completedAt: new Date().toISOString(),
-            }
-          : m
-      ),
-    }));
+  getUserTournaments: async (userId: string) => {
+    try {
+      return await tournamentService.getUserTournaments(userId);
+    } catch (error) {
+      console.error('Error fetching user tournaments:', error);
+      return { created: [], joined: [] };
+    }
+  },
+
+  createTournament: async (data, organizerId) => {
+    try {
+      const tournament = await tournamentService.createTournament(data, organizerId);
+      set((state) => ({
+        tournaments: [tournament, ...state.tournaments],
+      }));
+      return tournament;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to create tournament';
+      throw new Error(message);
+    }
+  },
+
+  updateTournament: async (id, updates) => {
+    try {
+      await tournamentService.updateTournament(id, updates);
+      // Refetch to get updated data
+      await get().fetchTournaments();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update tournament';
+      throw new Error(message);
+    }
+  },
+
+  deleteTournament: async (id) => {
+    try {
+      await tournamentService.deleteTournament(id);
+      set((state) => ({
+        tournaments: state.tournaments.filter((t) => t.id !== id),
+      }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete tournament';
+      throw new Error(message);
+    }
+  },
+
+  joinTournament: async (tournamentId, userId) => {
+    try {
+      await tournamentService.joinTournament(tournamentId, userId);
+      // Refetch to get updated participant count
+      await get().fetchTournaments();
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to join tournament';
+      return { success: false, error: message };
+    }
+  },
+
+  leaveTournament: async (tournamentId, userId) => {
+    try {
+      await tournamentService.leaveTournament(tournamentId, userId);
+      await get().fetchTournaments();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to leave tournament';
+      throw new Error(message);
+    }
+  },
+
+  updateMatchResult: async (matchId, score1, score2, winnerId) => {
+    try {
+      await tournamentService.updateMatch(matchId, {
+        participant1_score: score1,
+        participant2_score: score2,
+        winner_id: winnerId,
+        status: 'completed',
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update match';
+      throw new Error(message);
+    }
   },
 }));
-

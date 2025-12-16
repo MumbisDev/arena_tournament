@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Users, Trophy, Settings, Trash2, Play, CheckCircle, User, Save } from 'lucide-react';
 import { Layout, Breadcrumbs } from '../components/layout';
@@ -10,22 +10,26 @@ import { Modal, ConfirmModal } from '../components/ui/Modal';
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../components/ui/Table';
 import { useAuthStore } from '../store/authStore';
 import { useTournamentStore } from '../store/tournamentStore';
+import { tournamentService, type Tournament } from '../services/tournaments';
 import type { TournamentStatus } from '../types';
 
 type Tab = 'participants' | 'matches' | 'settings';
+
+interface Participant {
+  user_id: string;
+  joined_at: string;
+  profile: {
+    id: string;
+    username: string;
+    avatar?: string;
+  };
+}
 
 export function ManageTournamentPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const {
-    getTournamentById,
-    getMatchesByTournament,
-    updateTournament,
-    deleteTournament,
-    leaveTournament,
-    updateMatchResult,
-  } = useTournamentStore();
+  const { updateTournament, deleteTournament, leaveTournament, updateMatchResult } = useTournamentStore();
 
   const [activeTab, setActiveTab] = useState<Tab>('participants');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -38,9 +42,40 @@ export function ManageTournamentPage() {
     rules: string;
     status: TournamentStatus;
   } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
 
-  const tournament = getTournamentById(id || '');
-  const matches = getMatchesByTournament(id || '');
+  useEffect(() => {
+    const loadTournament = async () => {
+      if (!id) return;
+      setIsLoading(true);
+      try {
+        const [tournamentData, participantsData] = await Promise.all([
+          tournamentService.getTournament(id),
+          tournamentService.getParticipants(id),
+        ]);
+        setTournament(tournamentData);
+        setParticipants(participantsData as Participant[]);
+      } catch (error) {
+        console.error('Failed to load tournament:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadTournament();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="max-w-container mx-auto px-lg py-3xl text-center">
+          <div className="w-12 h-12 border-4 border-neutral-300 border-t-primary-black rounded-full animate-spin mx-auto mb-md" />
+          <p className="text-neutral-500">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!tournament) {
     return (
@@ -56,49 +91,56 @@ export function ManageTournamentPage() {
     );
   }
 
-  const isOrganizer = user?.id === tournament.organizerId;
-  const isAdmin = user?.role === 'admin';
-  const canManage = isOrganizer || isAdmin;
+  const isOrganizer = user?.id === tournament.organizer_id;
+  const canManage = isOrganizer;
 
   if (!canManage) {
     navigate(`/tournament/${id}`);
     return null;
   }
 
-  const handleRemoveParticipant = (participantId: string) => {
-    leaveTournament(tournament.id, participantId);
+  const handleRemoveParticipant = async (participantId: string) => {
+    try {
+      await leaveTournament(tournament.id, participantId);
+      setParticipants((prev) => prev.filter((p) => p.user_id !== participantId));
+    } catch (error) {
+      console.error('Failed to remove participant:', error);
+    }
     setShowRemoveParticipantModal(null);
   };
 
-  const handleDeleteTournament = () => {
-    deleteTournament(tournament.id);
-    navigate('/dashboard');
+  const handleDeleteTournament = async () => {
+    try {
+      await deleteTournament(tournament.id);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Failed to delete tournament:', error);
+    }
   };
 
-  const handleUpdateMatch = () => {
+  const handleUpdateMatch = async () => {
     if (showEditMatchModal) {
-      updateMatchResult(showEditMatchModal, matchScores.score1, matchScores.score2, matchScores.winnerId);
+      try {
+        await updateMatchResult(showEditMatchModal, matchScores.score1, matchScores.score2, matchScores.winnerId);
+      } catch (error) {
+        console.error('Failed to update match:', error);
+      }
       setShowEditMatchModal(null);
       setMatchScores({ score1: 0, score2: 0, winnerId: '' });
     }
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     if (editedSettings) {
-      updateTournament(tournament.id, editedSettings);
+      try {
+        await updateTournament(tournament.id, editedSettings);
+        // Refresh tournament data
+        const updated = await tournamentService.getTournament(tournament.id);
+        if (updated) setTournament(updated);
+      } catch (error) {
+        console.error('Failed to save settings:', error);
+      }
       setEditedSettings(null);
-    }
-  };
-
-  const openEditMatch = (matchId: string) => {
-    const match = matches.find((m) => m.id === matchId);
-    if (match) {
-      setMatchScores({
-        score1: match.participant1?.score || 0,
-        score2: match.participant2?.score || 0,
-        winnerId: match.winnerId || '',
-      });
-      setShowEditMatchModal(matchId);
     }
   };
 
@@ -115,7 +157,13 @@ export function ManageTournamentPage() {
     { value: 'cancelled', label: 'Cancelled' },
   ];
 
-  const currentMatch = showEditMatchModal ? matches.find((m) => m.id === showEditMatchModal) : null;
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
   return (
     <Layout>
@@ -176,11 +224,11 @@ export function ManageTournamentPage() {
             <div>
               <div className="flex items-center justify-between mb-lg">
                 <h2 className="text-h3 uppercase">
-                  Participants ({tournament.currentParticipants}/{tournament.maxParticipants})
+                  Participants ({tournament.current_participants}/{tournament.max_participants})
                 </h2>
               </div>
 
-              {tournament.participants.length === 0 ? (
+              {participants.length === 0 ? (
                 <Card className="p-xl text-center border border-neutral-200">
                   <Users className="w-12 h-12 mx-auto text-neutral-300 mb-md" />
                   <p className="text-neutral-500">No participants yet.</p>
@@ -196,23 +244,29 @@ export function ManageTournamentPage() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tournament.participants.map((participantId, index) => (
-                      <TableRow key={participantId}>
+                    {participants.map((participant, index) => (
+                      <TableRow key={participant.user_id}>
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-neutral-100 rounded-full flex items-center justify-center">
-                              <User size={16} className="text-neutral-400" />
+                            <div className="w-8 h-8 bg-neutral-100 rounded-full flex items-center justify-center overflow-hidden">
+                              {participant.profile?.avatar ? (
+                                <img src={participant.profile.avatar} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <User size={16} className="text-neutral-400" />
+                              )}
                             </div>
-                            <span>Player {index + 1}</span>
+                            <span>{participant.profile?.username || 'Unknown'}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-neutral-500">Recently</TableCell>
+                        <TableCell className="text-neutral-500">
+                          {formatDate(participant.joined_at)}
+                        </TableCell>
                         <TableCell>
                           <Button
                             variant="text"
                             size="sm"
-                            onClick={() => setShowRemoveParticipantModal(participantId)}
+                            onClick={() => setShowRemoveParticipantModal(participant.user_id)}
                             className="text-semantic-error"
                           >
                             Remove
@@ -230,64 +284,23 @@ export function ManageTournamentPage() {
             <div>
               <h2 className="text-h3 uppercase mb-lg">Match Results</h2>
 
-              {matches.length === 0 ? (
-                <Card className="p-xl text-center border border-neutral-200">
-                  <Trophy className="w-12 h-12 mx-auto text-neutral-300 mb-md" />
-                  <p className="text-neutral-500">No matches generated yet.</p>
-                  {tournament.status === 'upcoming' && (
-                    <Button className="mt-md" onClick={() => updateTournament(tournament.id, { status: 'live' })}>
-                      <Play size={16} />
-                      Start Tournament
-                    </Button>
-                  )}
-                </Card>
-              ) : (
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader>Match</TableHeader>
-                      <TableHeader>Players</TableHeader>
-                      <TableHeader>Score</TableHeader>
-                      <TableHeader>Status</TableHeader>
-                      <TableHeader>Actions</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {matches.map((match) => (
-                      <TableRow key={match.id}>
-                        <TableCell>
-                          Round {match.round}, Match {match.matchNumber}
-                        </TableCell>
-                        <TableCell>
-                          <span className={match.winnerId === match.participant1?.id ? 'font-medium' : ''}>
-                            {match.participant1?.name || 'TBD'}
-                          </span>
-                          <span className="text-neutral-400 mx-2">vs</span>
-                          <span className={match.winnerId === match.participant2?.id ? 'font-medium' : ''}>
-                            {match.participant2?.name || 'TBD'}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {match.participant1?.score ?? '-'} : {match.participant2?.score ?? '-'}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={match.status} />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="text"
-                            size="sm"
-                            onClick={() => openEditMatch(match.id)}
-                            disabled={!match.participant1 || !match.participant2}
-                          >
-                            Edit Result
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+              <Card className="p-xl text-center border border-neutral-200">
+                <Trophy className="w-12 h-12 mx-auto text-neutral-300 mb-md" />
+                <p className="text-neutral-500">Match generation coming soon.</p>
+                {tournament.status === 'upcoming' && (
+                  <Button 
+                    className="mt-md" 
+                    onClick={async () => {
+                      await updateTournament(tournament.id, { status: 'live' });
+                      const updated = await tournamentService.getTournament(tournament.id);
+                      if (updated) setTournament(updated);
+                    }}
+                  >
+                    <Play size={16} />
+                    Start Tournament
+                  </Button>
+                )}
+              </Card>
             </div>
           )}
 
@@ -416,56 +429,40 @@ export function ManageTournamentPage() {
         title="Update Match Result"
         size="sm"
       >
-        {currentMatch && (
-          <div className="space-y-lg">
-            <div className="flex items-center justify-between gap-md">
-              <div className="flex-1">
-                <label className="label">{currentMatch.participant1?.name || 'TBD'}</label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={matchScores.score1}
-                  onChange={(e) => setMatchScores((prev) => ({ ...prev, score1: Number(e.target.value) }))}
-                />
-              </div>
-              <span className="text-neutral-400 mt-6">vs</span>
-              <div className="flex-1">
-                <label className="label">{currentMatch.participant2?.name || 'TBD'}</label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={matchScores.score2}
-                  onChange={(e) => setMatchScores((prev) => ({ ...prev, score2: Number(e.target.value) }))}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="label">Winner</label>
-              <Select
-                options={[
-                  { value: '', label: 'Select winner' },
-                  { value: currentMatch.participant1?.id || '', label: currentMatch.participant1?.name || 'Player 1' },
-                  { value: currentMatch.participant2?.id || '', label: currentMatch.participant2?.name || 'Player 2' },
-                ]}
-                value={matchScores.winnerId}
-                onChange={(e) => setMatchScores((prev) => ({ ...prev, winnerId: e.target.value }))}
+        <div className="space-y-lg">
+          <div className="flex items-center justify-between gap-md">
+            <div className="flex-1">
+              <label className="label">Player 1</label>
+              <Input
+                type="number"
+                min={0}
+                value={matchScores.score1}
+                onChange={(e) => setMatchScores((prev) => ({ ...prev, score1: Number(e.target.value) }))}
               />
             </div>
-
-            <div className="flex gap-md justify-end">
-              <Button variant="secondary" onClick={() => setShowEditMatchModal(null)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdateMatch} disabled={!matchScores.winnerId}>
-                <CheckCircle size={16} />
-                Save Result
-              </Button>
+            <span className="text-neutral-400 mt-6">vs</span>
+            <div className="flex-1">
+              <label className="label">Player 2</label>
+              <Input
+                type="number"
+                min={0}
+                value={matchScores.score2}
+                onChange={(e) => setMatchScores((prev) => ({ ...prev, score2: Number(e.target.value) }))}
+              />
             </div>
           </div>
-        )}
+
+          <div className="flex gap-md justify-end">
+            <Button variant="secondary" onClick={() => setShowEditMatchModal(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateMatch} disabled={!matchScores.winnerId}>
+              <CheckCircle size={16} />
+              Save Result
+            </Button>
+          </div>
+        </div>
       </Modal>
     </Layout>
   );
 }
-

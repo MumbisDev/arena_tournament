@@ -8,8 +8,9 @@ import { Modal } from '../components/ui/Modal';
 import { StatusBadge } from '../components/ui/Badge';
 import { useAuthStore } from '../store/authStore';
 import { useTournamentStore } from '../store/tournamentStore';
-import { gamesList } from '../store/mockData';
-import type { CreateTournamentData, TournamentFormat, GamePlatform, Region } from '../types';
+import { GAMES_LIST } from '../lib/constants';
+import type { TournamentFormat, GamePlatform, Region } from '../types';
+import type { CreateTournamentInput } from '../services/tournaments';
 
 type Step = 'details' | 'format' | 'rules' | 'schedule' | 'preview';
 
@@ -21,35 +22,36 @@ const steps: { key: Step; label: string }[] = [
   { key: 'preview', label: 'Preview' },
 ];
 
-const defaultFormData: CreateTournamentData = {
+const defaultFormData: CreateTournamentInput = {
   name: '',
   game: '',
   description: '',
   format: 'single-elimination',
   platform: 'pc',
   region: 'north-america',
-  maxParticipants: 16,
-  prizePool: '',
+  max_participants: 16,
+  prize_pool: '',
   rules: '',
-  startDate: '',
-  registrationDeadline: '',
+  start_date: '',
+  registration_deadline: '',
 };
 
 export function CreateTournamentPage() {
   const navigate = useNavigate();
-  const { user, updateProfile } = useAuthStore();
+  const { user } = useAuthStore();
   const { createTournament } = useTournamentStore();
   
   const [currentStep, setCurrentStep] = useState<Step>('details');
-  const [formData, setFormData] = useState<CreateTournamentData>(defaultFormData);
+  const [formData, setFormData] = useState<CreateTournamentInput>(defaultFormData);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateTournamentData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof CreateTournamentInput, string>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentStepIndex = steps.findIndex((s) => s.key === currentStep);
 
-  const updateField = <K extends keyof CreateTournamentData>(
+  const updateField = <K extends keyof CreateTournamentInput>(
     field: K,
-    value: CreateTournamentData[K]
+    value: CreateTournamentInput[K]
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -58,7 +60,7 @@ export function CreateTournamentPage() {
   };
 
   const validateStep = (): boolean => {
-    const newErrors: Partial<Record<keyof CreateTournamentData, string>> = {};
+    const newErrors: Partial<Record<keyof CreateTournamentInput, string>> = {};
 
     if (currentStep === 'details') {
       if (!formData.name.trim()) newErrors.name = 'Tournament name is required';
@@ -67,12 +69,12 @@ export function CreateTournamentPage() {
     }
 
     if (currentStep === 'schedule') {
-      if (!formData.startDate) newErrors.startDate = 'Start date is required';
-      if (!formData.registrationDeadline) newErrors.registrationDeadline = 'Registration deadline is required';
+      if (!formData.start_date) newErrors.start_date = 'Start date is required';
+      if (!formData.registration_deadline) newErrors.registration_deadline = 'Registration deadline is required';
       
-      if (formData.startDate && formData.registrationDeadline) {
-        if (new Date(formData.registrationDeadline) >= new Date(formData.startDate)) {
-          newErrors.registrationDeadline = 'Registration must close before tournament starts';
+      if (formData.start_date && formData.registration_deadline) {
+        if (new Date(formData.registration_deadline) >= new Date(formData.start_date)) {
+          newErrors.registration_deadline = 'Registration must close before tournament starts';
         }
       }
     }
@@ -97,25 +99,22 @@ export function CreateTournamentPage() {
     }
   };
 
-  const handleSubmit = () => {
-    if (!user) return;
+  const handleSubmit = async () => {
+    if (!user || isSubmitting) return;
     
-    const tournament = createTournament(formData, user.id, user.username);
-    
-    // Update user stats
-    updateProfile({
-      stats: {
-        ...user.stats,
-        tournamentsCreated: user.stats.tournamentsCreated + 1,
-      },
-    });
-    
-    navigate(`/tournament/${tournament.id}`);
+    setIsSubmitting(true);
+    try {
+      const tournament = await createTournament(formData, user.id);
+      navigate(`/tournament/${tournament.id}`);
+    } catch (error) {
+      console.error('Failed to create tournament:', error);
+      setIsSubmitting(false);
+    }
   };
 
   const gameOptions = [
     { value: '', label: 'Select a game' },
-    ...gamesList.map((game) => ({ value: game, label: game })),
+    ...GAMES_LIST.map((game) => ({ value: game, label: game })),
   ];
 
   const formatOptions: { value: TournamentFormat; label: string }[] = [
@@ -228,8 +227,8 @@ export function CreateTournamentPage() {
               <Input
                 label="Prize Pool (Optional)"
                 placeholder="e.g., $1,000"
-                value={formData.prizePool || ''}
-                onChange={(e) => updateField('prizePool', e.target.value)}
+                value={formData.prize_pool || ''}
+                onChange={(e) => updateField('prize_pool', e.target.value)}
               />
             </div>
           )}
@@ -257,8 +256,8 @@ export function CreateTournamentPage() {
               <Select
                 label="Maximum Participants"
                 options={participantOptions}
-                value={String(formData.maxParticipants)}
-                onChange={(e) => updateField('maxParticipants', Number(e.target.value))}
+                value={String(formData.max_participants)}
+                onChange={(e) => updateField('max_participants', Number(e.target.value))}
               />
             </div>
           )}
@@ -283,16 +282,16 @@ export function CreateTournamentPage() {
               <Input
                 label="Registration Deadline"
                 type="datetime-local"
-                value={formData.registrationDeadline}
-                onChange={(e) => updateField('registrationDeadline', e.target.value)}
-                error={errors.registrationDeadline}
+                value={formData.registration_deadline}
+                onChange={(e) => updateField('registration_deadline', e.target.value)}
+                error={errors?.registration_deadline}
               />
               <Input
                 label="Tournament Start Date"
                 type="datetime-local"
-                value={formData.startDate}
-                onChange={(e) => updateField('startDate', e.target.value)}
-                error={errors.startDate}
+                value={formData.start_date}
+                onChange={(e) => updateField('start_date', e.target.value)}
+                error={errors?.start_date}
               />
             </div>
           )}
@@ -328,14 +327,14 @@ export function CreateTournamentPage() {
                 </div>
                 <div>
                   <span className="text-xs text-neutral-500 uppercase tracking-wide block mb-1">Max Players</span>
-                  <span className="text-sm">{formData.maxParticipants}</span>
+                  <span className="text-sm">{formData.max_participants}</span>
                 </div>
               </div>
 
-              {formData.prizePool && (
+              {formData.prize_pool && (
                 <div className="mb-lg">
                   <span className="text-xs text-neutral-500 uppercase tracking-wide block mb-1">Prize Pool</span>
-                  <span className="text-lg font-medium">{formData.prizePool}</span>
+                  <span className="text-lg font-medium">{formData.prize_pool}</span>
                 </div>
               )}
 
@@ -374,8 +373,8 @@ export function CreateTournamentPage() {
             )}
             
             {currentStep === 'preview' ? (
-              <Button onClick={handleSubmit}>
-                Publish Tournament
+              <Button onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? 'Publishing...' : 'Publish Tournament'}
               </Button>
             ) : (
               <Button onClick={handleNext}>
@@ -419,7 +418,7 @@ export function CreateTournamentPage() {
             </div>
             <div>
               <span className="text-neutral-500">Max Players:</span>{' '}
-              {formData.maxParticipants}
+              {formData.max_participants}
             </div>
           </div>
         </div>

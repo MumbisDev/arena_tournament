@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import type { ReactNode } from 'react';
 
 interface CardProps {
@@ -5,36 +6,43 @@ interface CardProps {
   className?: string;
   hoverable?: boolean;
   onClick?: () => void;
+  onMouseEnter?: () => void;
 }
 
-export function Card({ children, className = '', hoverable = false, onClick }: CardProps) {
-  return (
-    <div
-      onClick={onClick}
-      className={`
-        bg-brutal-white border-3 border-brutal-black transition-all duration-fast
-        ${hoverable ? 'cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5' : ''}
-        ${onClick ? 'cursor-pointer' : ''}
-        ${className}
-      `}
-      style={{
-        boxShadow: hoverable ? '4px 4px 0px 0px #0A0A0A' : 'none',
-      }}
-      onMouseEnter={(e) => {
-        if (hoverable) {
-          e.currentTarget.style.boxShadow = '6px 6px 0px 0px #0A0A0A';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (hoverable) {
-          e.currentTarget.style.boxShadow = '4px 4px 0px 0px #0A0A0A';
-        }
-      }}
-    >
-      {children}
-    </div>
-  );
-}
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ children, className = '', hoverable = false, onClick, onMouseEnter }, ref) => {
+    return (
+      <div
+        ref={ref}
+        onClick={onClick}
+        className={`
+          bg-brutal-white border-3 border-brutal-black transition-all duration-fast
+          ${hoverable ? 'cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5' : ''}
+          ${onClick ? 'cursor-pointer' : ''}
+          ${className}
+        `}
+        style={{
+          boxShadow: hoverable ? '4px 4px 0px 0px #0A0A0A' : 'none',
+        }}
+        onMouseEnter={(e) => {
+          onMouseEnter?.();
+          if (hoverable) {
+            e.currentTarget.style.boxShadow = '6px 6px 0px 0px #0A0A0A';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (hoverable) {
+            e.currentTarget.style.boxShadow = '4px 4px 0px 0px #0A0A0A';
+          }
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+
+Card.displayName = 'Card';
 
 interface CardImageProps {
   src: string;

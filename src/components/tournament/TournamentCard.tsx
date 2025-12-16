@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { Users, Calendar, MapPin, Gamepad2 } from 'lucide-react';
 import type { Tournament } from '../../types';
 import { Card, CardContent } from '../ui/Card';
 import { StatusBadge, TagBadge } from '../ui/Badge';
+import { useTournamentStore } from '../../store/tournamentStore';
 
 interface TournamentCardProps {
   tournament: Tournament;
@@ -10,6 +12,36 @@ interface TournamentCardProps {
 
 export function TournamentCard({ tournament }: TournamentCardProps) {
   const navigate = useNavigate();
+  const { prefetchTournament } = useTournamentStore();
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = () => {
+    prefetchTournament(tournament.id);
+  };
+
+  // Prefetch when card is visible in viewport
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            prefetchTournament(tournament.id);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: '100px' } // Start prefetching 100px before card is visible
+    );
+
+    observer.observe(card);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [tournament.id, prefetchTournament]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -27,8 +59,10 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
 
   return (
     <Card
+      ref={cardRef}
       hoverable
       onClick={() => navigate(`/tournament/${tournament.id}`)}
+      onMouseEnter={handleMouseEnter}
       className="group overflow-hidden"
     >
       {/* Header bar */}
@@ -70,9 +104,9 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
         </div>
         
         {/* Prize pool */}
-        {tournament.prizePool && (
+        {tournament.prize_pool && (
           <div className="absolute top-3 right-3">
-            <TagBadge>{tournament.prizePool}</TagBadge>
+            <TagBadge>{tournament.prize_pool}</TagBadge>
           </div>
         )}
       </div>
@@ -88,7 +122,7 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
           <div className="flex items-center gap-3">
             <Calendar size={12} className="text-brutal-vermillion" />
             <span className="font-mono text-mono-xs text-neutral-600 uppercase tracking-widest">
-              {formatDate(tournament.startDate)}
+              {formatDate(tournament.start_date)}
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -100,7 +134,7 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
           <div className="flex items-center gap-3">
             <Users size={12} className="text-brutal-vermillion" />
             <span className="font-mono text-mono-xs text-neutral-600 uppercase tracking-widest">
-              {tournament.currentParticipants}/{tournament.maxParticipants} Players
+              {tournament.current_participants}/{tournament.max_participants} Players
             </span>
           </div>
         </div>
@@ -113,14 +147,14 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
                 Capacity
               </span>
               <span className="font-mono text-mono-xs text-brutal-vermillion uppercase tracking-widest">
-                {Math.round((tournament.currentParticipants / tournament.maxParticipants) * 100)}%
+                {Math.round((tournament.current_participants / tournament.max_participants) * 100)}%
               </span>
             </div>
             <div className="h-2 bg-neutral-200 border border-brutal-black overflow-hidden">
               <div
                 className="h-full bg-brutal-black transition-all duration-slow"
                 style={{
-                  width: `${(tournament.currentParticipants / tournament.maxParticipants) * 100}%`,
+                  width: `${(tournament.current_participants / tournament.max_participants) * 100}%`,
                 }}
               />
             </div>

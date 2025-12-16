@@ -1,7 +1,7 @@
 import { Search, X, Filter } from 'lucide-react';
 import { Select } from '../ui/Input';
 import { useTournamentStore } from '../../store/tournamentStore';
-import { gamesList } from '../../store/mockData';
+import { GAMES_LIST } from '../../lib/constants';
 
 export function TournamentFilters() {
   const { filters, setFilter, resetFilters } = useTournamentStore();
@@ -15,7 +15,7 @@ export function TournamentFilters() {
 
   const gameOptions = [
     { value: '', label: 'All Games' },
-    ...gamesList.map((game) => ({ value: game, label: game })),
+    ...GAMES_LIST.map((game) => ({ value: game, label: game })),
   ];
 
   const platformOptions = [

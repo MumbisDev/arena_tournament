@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Zap, Users, Award, ArrowRight } from 'lucide-react';
 import { Layout } from '../components/layout';
@@ -8,14 +9,17 @@ import { useTournamentStore } from '../store/tournamentStore';
 import { useAuthStore } from '../store/authStore';
 
 export function DiscoverPage() {
-  const { getFilteredTournaments } = useTournamentStore();
-  const { isAuthenticated, user } = useAuthStore();
-  const tournaments = getFilteredTournaments();
+  const { tournaments, fetchTournaments } = useTournamentStore();
+  const { isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    fetchTournaments();
+  }, [fetchTournaments]);
 
   // Get featured tournaments (live or upcoming with most participants)
   const featuredTournaments = [...tournaments]
     .filter((t) => t.status === 'live' || t.status === 'upcoming')
-    .sort((a, b) => b.currentParticipants - a.currentParticipants)
+    .sort((a, b) => b.current_participants - a.current_participants)
     .slice(0, 3);
 
   return (
@@ -79,14 +83,12 @@ export function DiscoverPage() {
           <div className="flex flex-wrap gap-4">
             {isAuthenticated ? (
               <>
-                {(user?.role === 'organizer' || user?.role === 'admin') && (
-                  <Link to="/create-tournament">
-                    <Button size="lg">
-                      Create Tournament
-                      <ArrowRight size={16} />
-                    </Button>
-                  </Link>
-                )}
+                <Link to="/create-tournament">
+                  <Button size="lg">
+                    Create Tournament
+                    <ArrowRight size={16} />
+                  </Button>
+                </Link>
                 <Link to="/dashboard">
                   <Button size="lg">
                     View Dashboard
@@ -187,13 +189,7 @@ export function DiscoverPage() {
         <TournamentFilters />
 
         <div className="mt-lg">
-          {tournaments.length === 0 ? (
-            <EmptyState
-              icon={Trophy}
-              title="No tournaments found"
-              description="Try adjusting your filters or check back later for new tournaments."
-            />
-          ) : (
+          {tournaments.length === 0 ? null : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-lg">
               {tournaments.map((tournament) => (
                 <TournamentCard key={tournament.id} tournament={tournament} />

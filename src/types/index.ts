@@ -1,19 +1,17 @@
-export type UserRole = 'guest' | 'player' | 'organizer' | 'admin';
-
+// User types - simplified, no roles
 export interface User {
   id: string;
   username: string;
   email: string;
-  avatar?: string;
-  role: UserRole;
-  createdAt: string;
-  bio?: string;
-  stats: {
-    tournamentsJoined: number;
-    tournamentsCreated: number;
-    wins: number;
-    losses: number;
-  };
+  avatar?: string | null;
+  created_at: string;
+  updated_at: string;
+  bio?: string | null;
+  // Stats from user_stats table
+  tournaments_joined: number;
+  tournaments_created: number;
+  wins: number;
+  losses: number;
 }
 
 export type TournamentStatus = 'upcoming' | 'live' | 'completed' | 'cancelled';
@@ -26,45 +24,44 @@ export interface Tournament {
   name: string;
   game: string;
   description: string;
-  organizerId: string;
-  organizerName: string;
+  organizer_id: string;
+  organizer_name: string;
+  organizer_avatar?: string | null;
   status: TournamentStatus;
   format: TournamentFormat;
   platform: GamePlatform;
   region: Region;
-  maxParticipants: number;
-  currentParticipants: number;
-  prizePool?: string;
+  max_participants: number;
+  current_participants: number;
+  prize_pool?: string | null;
   rules: string;
-  startDate: string;
-  endDate?: string;
-  registrationDeadline: string;
-  createdAt: string;
-  image?: string;
-  participants: string[];
+  start_date: string;
+  end_date?: string | null;
+  registration_deadline: string;
+  created_at: string;
+  updated_at: string;
+  image?: string | null;
 }
 
 export type MatchStatus = 'pending' | 'live' | 'completed';
 
 export interface Match {
   id: string;
-  tournamentId: string;
+  tournament_id: string;
   round: number;
-  matchNumber: number;
-  participant1: {
-    id: string;
-    name: string;
-    score?: number;
-  } | null;
-  participant2: {
-    id: string;
-    name: string;
-    score?: number;
-  } | null;
-  winnerId?: string;
+  match_number: number;
+  participant1_id: string | null;
+  participant1_score: number;
+  participant2_id: string | null;
+  participant2_score: number;
+  winner_id: string | null;
   status: MatchStatus;
-  scheduledAt?: string;
-  completedAt?: string;
+  scheduled_at: string | null;
+  completed_at: string | null;
+  // Joined data
+  participant1?: { id: string; username: string; avatar?: string } | null;
+  participant2?: { id: string; username: string; avatar?: string } | null;
+  winner?: { id: string; username: string } | null;
 }
 
 export interface Bracket {
@@ -87,10 +84,10 @@ export interface CreateTournamentData {
   format: TournamentFormat;
   platform: GamePlatform;
   region: Region;
-  maxParticipants: number;
-  prizePool?: string;
+  max_participants: number;
+  prize_pool?: string;
   rules: string;
-  startDate: string;
-  registrationDeadline: string;
+  start_date: string;
+  registration_deadline: string;
+  image?: string;
 }
-

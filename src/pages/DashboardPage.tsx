@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Trophy, Calendar, TrendingUp, Plus, ChevronRight, Zap } from 'lucide-react';
 import { Layout, Breadcrumbs } from '../components/layout';
@@ -7,18 +8,44 @@ import { StatusBadge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useAuthStore } from '../store/authStore';
 import { useTournamentStore } from '../store/tournamentStore';
+import { tournamentService, type Match } from '../services/tournaments';
+import type { Tournament } from '../services/tournaments';
 
 export function DashboardPage() {
   const { user } = useAuthStore();
-  const { getUserTournaments, getMatchesByTournament, tournaments } = useTournamentStore();
+  const { getUserTournaments, tournaments } = useTournamentStore();
+  const [userTournaments, setUserTournaments] = useState<{ created: Tournament[]; joined: Tournament[] }>({ created: [], joined: [] });
+  const [upcomingMatches, setUpcomingMatches] = useState<Match[]>([]);
   
-  const userTournaments = user ? getUserTournaments(user.id) : { created: [], joined: [] };
-  
-  // Get upcoming matches for joined tournaments
-  const upcomingMatches = userTournaments.joined
-    .flatMap((t) => getMatchesByTournament(t.id))
-    .filter((m) => m.status === 'pending' || m.status === 'live')
-    .slice(0, 5);
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      if (!user) {
+        return;
+      }
+
+      try {
+        // Load user tournaments
+        const tournamentsData = await getUserTournaments(user.id);
+        setUserTournaments(tournamentsData);
+
+        // Load matches for all joined tournaments
+        const matchesPromises = tournamentsData.joined.map((t) => tournamentService.getMatches(t.id));
+        const matchesArrays = await Promise.all(matchesPromises);
+        const allMatches = matchesArrays.flat();
+        
+        // Filter and sort upcoming matches
+        const upcoming = allMatches
+          .filter((m) => m.status === 'pending' || m.status === 'live')
+          .slice(0, 5);
+        
+        setUpcomingMatches(upcoming);
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+      }
+    };
+
+    loadDashboardData();
+  }, [user, getUserTournaments]);
 
   // Any authenticated user can create tournaments
   const canCreateTournament = !!user;
@@ -73,10 +100,10 @@ export function DashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-0 mb-xl bg-brutal-white border-3 border-brutal-black" style={{ boxShadow: '4px 4px 0px 0px #0A0A0A' }}>
           {[
-            { label: 'Joined', value: user?.stats.tournamentsJoined || 0 },
-            { label: 'Created', value: user?.stats.tournamentsCreated || 0 },
-            { label: 'Wins', value: user?.stats.wins || 0, color: 'text-semantic-success' },
-            { label: 'Losses', value: user?.stats.losses || 0, color: 'text-neutral-400' },
+            { label: 'Joined', value: user?.tournaments_joined || 0 },
+            { label: 'Created', value: user?.tournaments_created || 0 },
+            { label: 'Wins', value: user?.wins || 0, color: 'text-semantic-success' },
+            { label: 'Losses', value: user?.losses || 0, color: 'text-neutral-400' },
           ].map((stat, index) => (
             <div 
               key={stat.label}
@@ -116,9 +143,11 @@ export function DashboardPage() {
             ) : (
               <div className="space-y-md">
                 {upcomingMatches.map((match) => {
-                  const tournament = tournaments.find(t => t.id === match.tournamentId);
+                  const tournament = tournaments.find(t => t.id === match.tournament_id) || 
+                                    userTournaments.joined.find(t => t.id === match.tournament_id) ||
+                                    userTournaments.created.find(t => t.id === match.tournament_id);
                   return (
-                    <Link key={match.id} to={`/tournament/${match.tournamentId}/matches`}>
+                    <Link key={match.id} to={`/tournament/${match.tournament_id}/matches`}>
                       <Card hoverable className="group">
                         <div className="px-md py-sm bg-brutal-black text-brutal-white flex items-center justify-between">
                           <span className="font-mono text-mono-xs uppercase tracking-widest">
@@ -130,17 +159,17 @@ export function DashboardPage() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                               <span className="font-display text-lg uppercase">
-                                {match.participant1?.name || 'TBD'}
+                                {match.participant1?.username || 'TBD'}
                               </span>
                               <span className="font-mono text-mono-xs text-brutal-vermillion">VS</span>
                               <span className="font-display text-lg uppercase">
-                                {match.participant2?.name || 'TBD'}
+                                {match.participant2?.username || 'TBD'}
                               </span>
                             </div>
                             <div className="flex items-center gap-md">
-                              {match.scheduledAt && (
+                              {match.scheduled_at && (
                                 <span className="font-mono text-mono-xs text-neutral-500 uppercase tracking-widest">
-                                  {formatDate(match.scheduledAt)}
+                                  {formatDate(match.scheduled_at)}
                                 </span>
                               )}
                               <ChevronRight size={16} className="text-neutral-400 group-hover:text-brutal-vermillion transition-colors" />
