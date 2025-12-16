@@ -1,0 +1,597 @@
+{
+    "designSystem": {
+      "metadata": {
+        "name": "SOTF Store of the Future",
+        "type": "E-commerce Fashion Platform",
+        "designLanguage": "Minimal Modern with Bold Typography"
+      },
+      "colorPalette": {
+        "primary": {
+          "black": "#000000",
+          "white": "#FFFFFF",
+          "description": "Core brand colors, high contrast scheme"
+        },
+        "neutrals": {
+          "gray100": "#F5F5F5",
+          "gray200": "#E5E5E5",
+          "gray300": "#D4D4D4",
+          "gray400": "#A3A3A3",
+          "gray500": "#737373",
+          "gray600": "#525252",
+          "gray700": "#404040",
+          "gray800": "#262626"
+        },
+        "accent": {
+          "blue": "#4A90E2",
+          "lightBlue": "#A8D8F0",
+          "coral": "#FF6B6B",
+          "yellow": "#F4D03F"
+        },
+        "semantic": {
+          "error": "#DC2626",
+          "success": "#16A34A",
+          "warning": "#EAB308"
+        }
+      },
+      "elementStyling": {
+        "navigationBar": {
+          "background": "#FFFFFF",
+          "border": "none",
+          "boxShadow": "0 1px 3px rgba(0, 0, 0, 0.05)",
+          "height": "60px",
+          "position": "fixed",
+          "zIndex": 1000,
+          "logo": {
+            "textColor": "#000000",
+            "fontSize": "24px",
+            "fontWeight": "300",
+            "letterSpacing": "0.2em"
+          },
+          "menuItems": {
+            "textColor": "#000000",
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.15em",
+            "hover": {
+              "textColor": "#525252",
+              "background": "none"
+            }
+          },
+          "icons": {
+            "color": "#000000",
+            "size": "20px",
+            "hover": {
+              "color": "#525252"
+            }
+          }
+        },
+        "sidebar": {
+          "background": "#F5F5F5",
+          "width": "260px",
+          "border": "none",
+          "menuItems": {
+            "default": {
+              "textColor": "#000000",
+              "fontSize": "13px",
+              "fontWeight": "400",
+              "textTransform": "uppercase",
+              "padding": "16px 24px",
+              "background": "transparent",
+              "letterSpacing": "0.05em"
+            },
+            "hover": {
+              "background": "#E5E5E5",
+              "textColor": "#000000"
+            },
+            "active": {
+              "background": "#000000",
+              "textColor": "#FFFFFF"
+            },
+            "expandIcon": {
+              "color": "#000000",
+              "size": "12px"
+            }
+          },
+          "searchInput": {
+            "background": "#FFFFFF",
+            "border": "1px solid #E5E5E5",
+            "borderRadius": "0px",
+            "padding": "12px 16px",
+            "fontSize": "12px",
+            "textColor": "#525252",
+            "placeholderColor": "#A3A3A3",
+            "focus": {
+              "border": "1px solid #000000",
+              "outline": "none"
+            }
+          }
+        },
+        "heroSection": {
+          "container": {
+            "background": "Image with overlay",
+            "minHeight": "400px",
+            "overlay": "linear-gradient(90deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%)"
+          },
+          "title": {
+            "color": "#FFFFFF",
+            "fontSize": "48px",
+            "fontWeight": "300",
+            "letterSpacing": "0.1em",
+            "textTransform": "uppercase",
+            "textShadow": "0 2px 8px rgba(0,0,0,0.3)"
+          },
+          "subtitle": {
+            "color": "#FFFFFF",
+            "fontSize": "18px",
+            "fontWeight": "300",
+            "letterSpacing": "0.05em"
+          }
+        },
+        "productCards": {
+          "container": {
+            "background": "#FFFFFF",
+            "border": "none",
+            "borderRadius": "0px",
+            "boxShadow": "none",
+            "transition": "all 0.3s ease",
+            "hover": {
+              "boxShadow": "0 4px 12px rgba(0,0,0,0.08)",
+              "transform": "translateY(-2px)"
+            }
+          },
+          "imageContainer": {
+            "background": "#F5F5F5",
+            "aspectRatio": "1/1",
+            "overflow": "hidden",
+            "position": "relative"
+          },
+          "image": {
+            "objectFit": "cover",
+            "width": "100%",
+            "height": "100%",
+            "transition": "transform 0.3s ease",
+            "hover": {
+              "transform": "scale(1.05)"
+            }
+          },
+          "overlayIcons": {
+            "background": "rgba(255, 255, 255, 0.9)",
+            "border": "none",
+            "borderRadius": "50%",
+            "width": "36px",
+            "height": "36px",
+            "iconColor": "#000000",
+            "iconSize": "18px",
+            "boxShadow": "0 2px 6px rgba(0,0,0,0.1)",
+            "hover": {
+              "background": "#000000",
+              "iconColor": "#FFFFFF"
+            }
+          },
+          "brandName": {
+            "textColor": "#737373",
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.1em",
+            "marginBottom": "4px"
+          },
+          "productName": {
+            "textColor": "#000000",
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.05em",
+            "marginBottom": "8px"
+          },
+          "price": {
+            "textColor": "#000000",
+            "fontSize": "14px",
+            "fontWeight": "500"
+          }
+        },
+        "buttons": {
+          "primary": {
+            "background": "#000000",
+            "textColor": "#FFFFFF",
+            "border": "none",
+            "borderRadius": "0px",
+            "padding": "14px 32px",
+            "fontSize": "12px",
+            "fontWeight": "500",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.1em",
+            "transition": "all 0.3s ease",
+            "hover": {
+              "background": "#262626",
+              "transform": "translateY(-1px)",
+              "boxShadow": "0 4px 8px rgba(0,0,0,0.2)"
+            },
+            "active": {
+              "background": "#000000",
+              "transform": "translateY(0px)"
+            },
+            "disabled": {
+              "background": "#D4D4D4",
+              "textColor": "#A3A3A3",
+              "cursor": "not-allowed"
+            }
+          },
+          "secondary": {
+            "background": "transparent",
+            "textColor": "#000000",
+            "border": "1px solid #000000",
+            "borderRadius": "0px",
+            "padding": "14px 32px",
+            "fontSize": "12px",
+            "fontWeight": "500",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.1em",
+            "hover": {
+              "background": "#000000",
+              "textColor": "#FFFFFF"
+            }
+          },
+          "text": {
+            "background": "transparent",
+            "textColor": "#000000",
+            "border": "none",
+            "padding": "8px 16px",
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.05em",
+            "textDecoration": "underline",
+            "hover": {
+              "textColor": "#525252"
+            }
+          }
+        },
+        "sizeSelector": {
+          "container": {
+            "display": "grid",
+            "gap": "8px"
+          },
+          "sizeButton": {
+            "default": {
+              "background": "transparent",
+              "textColor": "#000000",
+              "border": "1px solid #D4D4D4",
+              "borderRadius": "0px",
+              "padding": "12px",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "textAlign": "center",
+              "minWidth": "60px"
+            },
+            "hover": {
+              "border": "1px solid #000000",
+              "background": "#F5F5F5"
+            },
+            "selected": {
+              "background": "#000000",
+              "textColor": "#FFFFFF",
+              "border": "1px solid #000000"
+            },
+            "disabled": {
+              "background": "#F5F5F5",
+              "textColor": "#D4D4D4",
+              "border": "1px solid #E5E5E5",
+              "cursor": "not-allowed"
+            }
+          }
+        },
+        "filterPanel": {
+          "container": {
+            "background": "#000000",
+            "textColor": "#FFFFFF",
+            "padding": "16px 24px"
+          },
+          "title": {
+            "fontSize": "12px",
+            "fontWeight": "500",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.1em"
+          },
+          "expandIcon": {
+            "color": "#FFFFFF",
+            "size": "16px"
+          }
+        },
+        "forms": {
+          "inputField": {
+            "background": "#FFFFFF",
+            "border": "1px solid #D4D4D4",
+            "borderRadius": "0px",
+            "padding": "12px 16px",
+            "fontSize": "14px",
+            "textColor": "#000000",
+            "placeholderColor": "#A3A3A3",
+            "focus": {
+              "border": "1px solid #000000",
+              "outline": "none",
+              "boxShadow": "0 0 0 2px rgba(0,0,0,0.1)"
+            },
+            "error": {
+              "border": "1px solid #DC2626"
+            }
+          },
+          "label": {
+            "textColor": "#000000",
+            "fontSize": "12px",
+            "fontWeight": "400",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.05em",
+            "marginBottom": "8px"
+          },
+          "passwordToggle": {
+            "iconColor": "#737373",
+            "iconSize": "18px",
+            "hover": {
+              "iconColor": "#000000"
+            }
+          }
+        },
+        "breadcrumbs": {
+          "container": {
+            "padding": "16px 0",
+            "fontSize": "11px"
+          },
+          "link": {
+            "textColor": "#737373",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.05em",
+            "textDecoration": "none",
+            "hover": {
+              "textColor": "#000000"
+            }
+          },
+          "separator": {
+            "textColor": "#D4D4D4",
+            "padding": "0 8px"
+          },
+          "current": {
+            "textColor": "#000000",
+            "fontWeight": "500"
+          }
+        },
+        "productDetailGallery": {
+          "mainImage": {
+            "background": "#FFFFFF",
+            "aspectRatio": "1/1",
+            "border": "none"
+          },
+          "thumbnails": {
+            "container": {
+              "gap": "8px"
+            },
+            "thumbnail": {
+              "border": "1px solid #E5E5E5",
+              "borderRadius": "0px",
+              "width": "60px",
+              "height": "60px",
+              "cursor": "pointer",
+              "opacity": 0.6,
+              "hover": {
+                "opacity": 1,
+                "border": "1px solid #000000"
+              },
+              "active": {
+                "opacity": 1,
+                "border": "2px solid #000000"
+              }
+            }
+          }
+        },
+        "emptyState": {
+          "container": {
+            "background": "#F5F5F5",
+            "padding": "64px 32px",
+            "textAlign": "center"
+          },
+          "icon": {
+            "color": "#D4D4D4",
+            "size": "64px",
+            "marginBottom": "16px"
+          },
+          "title": {
+            "textColor": "#000000",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.05em"
+          },
+          "description": {
+            "textColor": "#737373",
+            "fontSize": "14px",
+            "marginTop": "8px"
+          }
+        },
+        "footer": {
+          "background": "#F5F5F5",
+          "border": "none",
+          "padding": "48px 24px",
+          "sectionTitle": {
+            "textColor": "#000000",
+            "fontSize": "12px",
+            "fontWeight": "500",
+            "textTransform": "uppercase",
+            "letterSpacing": "0.1em",
+            "marginBottom": "16px"
+          },
+          "links": {
+            "textColor": "#737373",
+            "fontSize": "13px",
+            "fontWeight": "400",
+            "textDecoration": "none",
+            "lineHeight": "2",
+            "hover": {
+              "textColor": "#000000"
+            }
+          },
+          "socialIcons": {
+            "color": "#000000",
+            "size": "20px",
+            "spacing": "16px",
+            "hover": {
+              "color": "#4A90E2"
+            }
+          }
+        }
+      },
+      "typography": {
+        "fontFamily": {
+          "primary": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+          "secondary": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+        },
+        "hierarchy": {
+          "h1": {
+            "fontSize": "48px",
+            "fontWeight": "300",
+            "lineHeight": "1.2",
+            "letterSpacing": "0.1em",
+            "textTransform": "uppercase"
+          },
+          "h2": {
+            "fontSize": "32px",
+            "fontWeight": "300",
+            "lineHeight": "1.3",
+            "letterSpacing": "0.08em",
+            "textTransform": "uppercase"
+          },
+          "h3": {
+            "fontSize": "24px",
+            "fontWeight": "400",
+            "lineHeight": "1.4",
+            "letterSpacing": "0.05em",
+            "textTransform": "uppercase"
+          },
+          "body": {
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "lineHeight": "1.6",
+            "letterSpacing": "0.02em"
+          },
+          "caption": {
+            "fontSize": "11px",
+            "fontWeight": "400",
+            "lineHeight": "1.5",
+            "letterSpacing": "0.05em",
+            "textTransform": "uppercase"
+          }
+        }
+      },
+      "spacing": {
+        "unit": "8px",
+        "scale": {
+          "xs": "4px",
+          "sm": "8px",
+          "md": "16px",
+          "lg": "24px",
+          "xl": "32px",
+          "2xl": "48px",
+          "3xl": "64px"
+        }
+      },
+      "layout": {
+        "maxWidth": "1440px",
+        "containerPadding": "24px",
+        "gridGap": "24px",
+        "productGridColumns": {
+          "mobile": "1",
+          "tablet": "2",
+          "desktop": "4"
+        }
+      },
+      "animations": {
+        "duration": {
+          "fast": "150ms",
+          "normal": "300ms",
+          "slow": "500ms"
+        },
+        "easing": {
+          "standard": "cubic-bezier(0.4, 0.0, 0.2, 1)",
+          "decelerate": "cubic-bezier(0.0, 0.0, 0.2, 1)",
+          "accelerate": "cubic-bezier(0.4, 0.0, 1, 1)"
+        }
+      },
+      "doNotRules": {
+        "colorApplication": [
+          "DO NOT apply card background colors to icons or text",
+          "DO NOT use button background colors on card containers",
+          "DO NOT apply overlay gradients to solid elements",
+          "DO NOT use navigation text colors for body content",
+          "DO NOT apply hover states to disabled elements"
+        ],
+        "visualEffects": [
+          "DO NOT add box shadows to sidebar menu items",
+          "DO NOT apply border radius to elements (design uses 0px throughout)",
+          "DO NOT add gradients to product images",
+          "DO NOT apply text shadows except in hero sections over images",
+          "DO NOT use multiple box shadows on single elements"
+        ],
+        "typography": [
+          "DO NOT mix text transforms within same hierarchy level",
+          "DO NOT reduce letter spacing below specified values",
+          "DO NOT use font weights outside specified system (300, 400, 500)",
+          "DO NOT apply uppercase transform to body text",
+          "DO NOT center-align body text in product descriptions"
+        ],
+        "spacing": [
+          "DO NOT use arbitrary spacing values outside the 8px scale",
+          "DO NOT reduce button padding below 14px vertical",
+          "DO NOT eliminate gaps in grid layouts",
+          "DO NOT add extra padding to already-padded containers"
+        ],
+        "interactions": [
+          "DO NOT add click effects to non-interactive elements",
+          "DO NOT remove hover states from buttons and links",
+          "DO NOT apply multiple simultaneous transforms on hover",
+          "DO NOT add transitions to instant-feedback elements like checkboxes"
+        ]
+      },
+      "componentPatterns": {
+        "cardHoverEffect": {
+          "trigger": "Mouse enter card container",
+          "transforms": [
+            "Elevate with translateY(-2px)",
+            "Add shadow: 0 4px 12px rgba(0,0,0,0.08)",
+            "Scale image to 1.05 within container"
+          ],
+          "duration": "300ms",
+          "easing": "cubic-bezier(0.4, 0.0, 0.2, 1)"
+        },
+        "buttonClickEffect": {
+          "trigger": "Mouse click",
+          "transforms": [
+            "Remove translateY offset",
+            "Reduce shadow briefly"
+          ],
+          "duration": "150ms"
+        },
+        "navigationPattern": {
+          "structure": "Fixed top bar + fixed left sidebar",
+          "scrollBehavior": "Header remains fixed, content scrolls beneath",
+          "mobileBreakpoint": "768px",
+          "mobileBehavior": "Sidebar collapses to hamburger menu"
+        }
+      },
+      "accessibilityNotes": {
+        "colorContrast": {
+          "minimumRatio": "4.5:1 for body text",
+          "largeTextRatio": "3:1 for headings",
+          "interactiveElements": "Sufficient contrast on all states"
+        },
+        "focusIndicators": {
+          "style": "2px solid outline with offset",
+          "color": "rgba(0,0,0,0.1) shadow ring",
+          "alwaysVisible": true
+        },
+        "textAlternatives": {
+          "images": "All product images require alt text",
+          "icons": "Decorative icons use aria-hidden, functional icons need labels"
+        }
+      }
+    }
+  }
