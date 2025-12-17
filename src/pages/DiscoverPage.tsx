@@ -9,15 +9,23 @@ import { useTournamentStore } from '../store/tournamentStore';
 import { useAuthStore } from '../store/authStore';
 
 export function DiscoverPage() {
-  const { tournaments, fetchTournaments, isLoading } = useTournamentStore();
+  const { tournaments, fetchTournaments, isLoading, filters } = useTournamentStore();
   const { isAuthenticated } = useAuthStore();
 
-  // Refetch tournaments if the list is empty (in case initial fetch failed)
+  // Check if any filters are active
+  const hasActiveFilters = 
+    filters.search || 
+    filters.game || 
+    filters.platform !== 'all' || 
+    filters.region !== 'all' || 
+    filters.status !== 'all';
+
+  // Fetch tournaments on initial load only (not when filters return empty results)
   useEffect(() => {
-    if (tournaments.length === 0 && !isLoading) {
+    if (tournaments.length === 0 && !isLoading && !hasActiveFilters) {
       fetchTournaments();
     }
-  }, [tournaments.length, isLoading, fetchTournaments]);
+  }, [tournaments.length, isLoading, hasActiveFilters, fetchTournaments]);
 
   // Get featured tournaments (live or upcoming with most participants)
   const featuredTournaments = [...tournaments]
