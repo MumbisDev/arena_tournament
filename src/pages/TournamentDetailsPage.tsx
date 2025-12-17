@@ -96,7 +96,7 @@ export function TournamentDetailsPage() {
   }
 
   const isOrganizer = user?.id === tournament?.organizer_id;
-  const canJoin = isAuthenticated && !isParticipant && !isOrganizer && tournament?.status === 'upcoming';
+  const canJoin = isAuthenticated && !isParticipant && tournament?.status === 'upcoming';
   const canLeave = isParticipant && tournament?.status === 'upcoming';
   const canManage = isOrganizer;
 
@@ -118,21 +118,26 @@ export function TournamentDetailsPage() {
   };
 
   const handleJoin = async () => {
-    if (!user) return;
-    const result = await joinTournament(tournament.id, user.id);
-    if (!result.success) {
-      setActionError(result.error || 'Failed to join tournament');
-    } else {
-      setIsParticipant(true);
-      // Refresh participants
-      const participantsData = await tournamentService.getParticipants(tournament.id);
-      setParticipants(participantsData as Array<{ user_id: string; profile: { id: string; username: string; avatar?: string } }>);
+    if (!user || !tournament) return;
+    setActionError('');
+    try {
+      const result = await joinTournament(tournament.id, user.id);
+      if (!result.success) {
+        setActionError(result.error || 'Failed to join tournament');
+      } else {
+        setIsParticipant(true);
+        // Refresh participants
+        const participantsData = await tournamentService.getParticipants(tournament.id);
+        setParticipants(participantsData as Array<{ user_id: string; profile: { id: string; username: string; avatar?: string } }>);
+      }
+    } catch (error) {
+      setActionError('Failed to join tournament');
     }
-    setShowJoinModal(false);
   };
 
   const handleLeave = async () => {
-    if (!user) return;
+    if (!user || !tournament) return;
+    setActionError('');
     try {
       await leaveTournament(tournament.id, user.id);
       setIsParticipant(false);
@@ -142,7 +147,6 @@ export function TournamentDetailsPage() {
     } catch (error) {
       setActionError('Failed to leave tournament');
     }
-    setShowLeaveModal(false);
   };
 
   const tabs: { key: Tab; label: string }[] = [
@@ -231,7 +235,10 @@ export function TournamentDetailsPage() {
                   <Button variant="secondary" onClick={() => setShowLeaveModal(true)}>Leave Tournament</Button>
                 )}
                 {canManage && (
-                  <Link to={`/tournament/${tournament.id}/manage`}>
+                  <Link 
+                    to={`/tournament/${tournament.id}/manage`}
+                    onMouseEnter={() => prefetchTournament(tournament.id)}
+                  >
                     <Button variant="secondary">
                       <Settings size={16} />
                       Manage

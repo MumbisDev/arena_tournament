@@ -126,8 +126,10 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       partialize: (state) => ({ 
-        // Only persist minimal data, full profile loaded on init
-        isAuthenticated: state.isAuthenticated 
+        // Persist user profile for instant UI on page load
+        // Full profile is still refreshed via initialize()
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
       }),
     }
   )

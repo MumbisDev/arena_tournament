@@ -9,12 +9,15 @@ import { useTournamentStore } from '../store/tournamentStore';
 import { useAuthStore } from '../store/authStore';
 
 export function DiscoverPage() {
-  const { tournaments, fetchTournaments } = useTournamentStore();
+  const { tournaments, fetchTournaments, isLoading } = useTournamentStore();
   const { isAuthenticated } = useAuthStore();
 
+  // Refetch tournaments if the list is empty (in case initial fetch failed)
   useEffect(() => {
-    fetchTournaments();
-  }, [fetchTournaments]);
+    if (tournaments.length === 0 && !isLoading) {
+      fetchTournaments();
+    }
+  }, [tournaments.length, isLoading, fetchTournaments]);
 
   // Get featured tournaments (live or upcoming with most participants)
   const featuredTournaments = [...tournaments]
@@ -25,7 +28,7 @@ export function DiscoverPage() {
   return (
     <Layout>
       {/* Hero Section - Japanese Brutalist */}
-      <section className="relative min-h-[500px] bg-brutal-black overflow-hidden">
+      <section className="relative min-h-[500px] bg-brutal-black overflow-hidden animate-fade-in">
         {/* Grid pattern overlay */}
         <div 
           className="absolute inset-0 opacity-10"
@@ -119,7 +122,7 @@ export function DiscoverPage() {
       </section>
 
       {/* Stats Section - Dense info display */}
-      <section className="bg-brutal-white border-y-4 border-brutal-black">
+      <section className="bg-brutal-white border-y-4 border-brutal-black animate-fade-in">
         <div className="max-w-container mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4">
             {[
@@ -130,7 +133,8 @@ export function DiscoverPage() {
             ].map((stat, index) => (
               <div 
                 key={stat.label}
-                className={`p-lg text-center border-brutal-black ${index < 3 ? 'border-r-3' : ''} hover:bg-brutal-cream transition-colors group`}
+                className={`p-lg text-center border-brutal-black ${index < 3 ? 'border-r-3' : ''} hover:bg-brutal-cream transition-colors group animate-fade-in`}
+                style={{ animationDelay: `${index * 100}ms` }}
               >
                 <stat.icon className="w-6 h-6 mx-auto mb-3 text-brutal-vermillion group-hover:scale-110 transition-transform" />
                 <div className="font-display text-4xl text-brutal-black mb-1">{stat.value}</div>
@@ -144,33 +148,55 @@ export function DiscoverPage() {
       </section>
 
       {/* Featured Tournaments */}
-      {featuredTournaments.length > 0 && (
-        <section className="max-w-container mx-auto px-lg py-2xl">
-          {/* Section header */}
-          <div className="flex items-end justify-between mb-lg border-b-3 border-brutal-black pb-4">
-            <div>
-              <span className="font-mono text-mono-xs text-brutal-vermillion uppercase tracking-[0.3em] block mb-2">
-                [01] Featured
-              </span>
-              <h2 className="font-display text-4xl md:text-5xl uppercase text-brutal-black">
-                Featured
-              </h2>
-            </div>
+      <section className="max-w-container mx-auto px-lg py-2xl">
+        {/* Section header */}
+        <div className="flex items-end justify-between mb-lg border-b-3 border-brutal-black pb-4">
+          <div>
+            <span className="font-mono text-mono-xs text-brutal-vermillion uppercase tracking-[0.3em] block mb-2">
+              [01] Featured
+            </span>
+            <h2 className="font-display text-4xl md:text-5xl uppercase text-brutal-black">
+              Featured
+            </h2>
+          </div>
+          {featuredTournaments.length > 0 && (
             <span className="hidden md:block font-mono text-mono-xs text-neutral-400 uppercase tracking-widest">
               {featuredTournaments.length} Events
             </span>
-          </div>
-          
+          )}
+        </div>
+        
+        {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-            {featuredTournaments.map((tournament) => (
-              <TournamentCard key={tournament.id} tournament={tournament} />
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-brutal-white border-3 border-brutal-black animate-pulse" style={{ boxShadow: '4px 4px 0px 0px #0A0A0A' }}>
+                <div className="h-48 bg-neutral-200" />
+                <div className="p-lg space-y-3">
+                  <div className="h-6 bg-neutral-200 rounded w-3/4" />
+                  <div className="h-4 bg-neutral-200 rounded w-1/2" />
+                </div>
+              </div>
             ))}
           </div>
-        </section>
-      )}
+        ) : featuredTournaments.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+            {featuredTournaments.map((tournament) => (
+              <div key={tournament.id}>
+                <TournamentCard tournament={tournament} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={Trophy}
+            title="No Featured Tournaments"
+            description="Check back soon for featured tournaments"
+          />
+        )}
+      </section>
 
       {/* Filters and All Tournaments */}
-      <section className="max-w-container mx-auto px-lg pb-3xl">
+      <section className="max-w-container mx-auto px-lg pb-3xl animate-fade-in">
         {/* Section header */}
         <div className="flex items-end justify-between mb-lg border-b-3 border-brutal-black pb-4">
           <div>
@@ -189,12 +215,32 @@ export function DiscoverPage() {
         <TournamentFilters />
 
         <div className="mt-lg">
-          {tournaments.length === 0 ? null : (
+          {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-lg">
-              {tournaments.map((tournament) => (
-                <TournamentCard key={tournament.id} tournament={tournament} />
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-brutal-white border-3 border-brutal-black animate-pulse" style={{ boxShadow: '4px 4px 0px 0px #0A0A0A' }}>
+                  <div className="h-48 bg-neutral-200" />
+                  <div className="p-lg space-y-3">
+                    <div className="h-6 bg-neutral-200 rounded w-3/4" />
+                    <div className="h-4 bg-neutral-200 rounded w-1/2" />
+                  </div>
+                </div>
               ))}
             </div>
+          ) : tournaments.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-lg">
+              {tournaments.map((tournament) => (
+                <div key={tournament.id}>
+                  <TournamentCard tournament={tournament} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={Trophy}
+              title="No Tournaments Found"
+              description="Be the first to create a tournament!"
+            />
           )}
         </div>
       </section>

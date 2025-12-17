@@ -13,6 +13,12 @@ import { useTournamentStore } from '../store/tournamentStore';
 import { tournamentService, type Tournament } from '../services/tournaments';
 import type { TournamentStatus } from '../types';
 
+// Re-export prefetch hook for use when linking to manage page
+export function usePrefetchManageTournament() {
+  const { prefetchTournament } = useTournamentStore();
+  return { prefetch: prefetchTournament };
+}
+
 type Tab = 'participants' | 'matches' | 'settings';
 
 interface Participant {
@@ -29,7 +35,11 @@ export function ManageTournamentPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { updateTournament, deleteTournament, leaveTournament, updateMatchResult } = useTournamentStore();
+  const { updateTournament, deleteTournament, leaveTournament, updateMatchResult, getCachedTournament, prefetchTournament } = useTournamentStore();
+
+  // Check cache synchronously to avoid flash of loading state
+  const initialCache = id ? getCachedTournament(id) : null;
+  const hasCachedData = !!(initialCache && initialCache.tournament);
 
   const [activeTab, setActiveTab] = useState<Tab>('participants');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -42,13 +52,29 @@ export function ManageTournamentPage() {
     rules: string;
     status: TournamentStatus;
   } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [tournament, setTournament] = useState<Tournament | null>(null);
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isLoading, setIsLoading] = useState(!hasCachedData);
+  const [tournament, setTournament] = useState<Tournament | null>(initialCache?.tournament || null);
+  const [participants, setParticipants] = useState<Participant[]>(
+    (initialCache?.participants as Participant[]) || []
+  );
 
   useEffect(() => {
     const loadTournament = async () => {
       if (!id) return;
+      
+      // If we already have cached data, just refresh in background
+      if (tournament) {
+        prefetchTournament(id).then(() => {
+          const freshCache = getCachedTournament(id);
+          if (freshCache && freshCache.tournament) {
+            setTournament(freshCache.tournament);
+            setParticipants(freshCache.participants as Participant[]);
+          }
+        });
+        return;
+      }
+      
+      // No cache, fetch normally
       setIsLoading(true);
       try {
         const [tournamentData, participantsData] = await Promise.all([
@@ -64,6 +90,7 @@ export function ManageTournamentPage() {
       }
     };
     loadTournament();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (isLoading) {

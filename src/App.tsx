@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuthStore } from './store/authStore';
+import { useTournamentStore } from './store/tournamentStore';
 import {
   DiscoverPage,
   DashboardPage,
@@ -15,23 +16,14 @@ import {
 } from './pages';
 
 export default function App() {
-  const { initialize, isLoading } = useAuthStore();
+  const { initialize } = useAuthStore();
+  const { fetchTournaments } = useTournamentStore();
 
   useEffect(() => {
     initialize();
-  }, [initialize]);
-
-  // Show loading while checking auth state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-brutal-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-brutal-black border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-neutral-500 font-mono text-sm uppercase tracking-widest">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+    // Start fetching tournaments immediately on app load
+    fetchTournaments();
+  }, [initialize, fetchTournaments]);
 
   return (
     <Routes>
