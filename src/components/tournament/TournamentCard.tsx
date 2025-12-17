@@ -5,6 +5,7 @@ import type { Tournament } from '../../types';
 import { Card, CardContent } from '../ui/Card';
 import { StatusBadge, TagBadge } from '../ui/Badge';
 import { useTournamentStore } from '../../store/tournamentStore';
+import { getGameThumbnail } from '../../lib/constants';
 
 interface TournamentCardProps {
   tournament: Tournament;
@@ -77,26 +78,32 @@ export function TournamentCard({ tournament }: TournamentCardProps) {
 
       {/* Image */}
       <div className="relative aspect-[16/9] bg-neutral-100 overflow-hidden border-b-3 border-brutal-black">
-        {tournament.image ? (
-          <>
-            <img
-              src={tournament.image}
-              alt={tournament.name}
-              className="w-full h-full object-cover transition-all duration-normal group-hover:scale-105 grayscale group-hover:grayscale-0"
-            />
-            {/* Scan lines overlay */}
-            <div 
-              className="absolute inset-0 pointer-events-none opacity-40"
-              style={{
-                background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(10, 10, 10, 0.15) 2px, rgba(10, 10, 10, 0.15) 4px)',
-              }}
-            />
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-neutral-200">
-            <Gamepad2 className="w-16 h-16 text-neutral-400" />
-          </div>
-        )}
+        {(() => {
+          const imageUrl = tournament.image || getGameThumbnail(tournament.game);
+          if (imageUrl) {
+            return (
+              <>
+                <img
+                  src={imageUrl}
+                  alt={tournament.name}
+                  className="w-full h-full object-cover transition-all duration-normal group-hover:scale-105 grayscale group-hover:grayscale-0"
+                />
+                {/* Scan lines overlay */}
+                <div 
+                  className="absolute inset-0 pointer-events-none opacity-40"
+                  style={{
+                    background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(10, 10, 10, 0.15) 2px, rgba(10, 10, 10, 0.15) 4px)',
+                  }}
+                />
+              </>
+            );
+          }
+          return (
+            <div className="w-full h-full flex items-center justify-center bg-neutral-200">
+              <Gamepad2 className="w-16 h-16 text-neutral-400" />
+            </div>
+          );
+        })()}
         
         {/* Status badge */}
         <div className="absolute top-3 left-3">

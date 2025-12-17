@@ -9,6 +9,7 @@ import { BracketView } from '../components/tournament';
 import { useAuthStore } from '../store/authStore';
 import { useTournamentStore } from '../store/tournamentStore';
 import { tournamentService, type Tournament } from '../services/tournaments';
+import { getGameThumbnail } from '../lib/constants';
 
 type Tab = 'overview' | 'bracket' | 'participants' | 'rules';
 
@@ -160,16 +161,22 @@ export function TournamentDetailsPage() {
     <Layout>
       {/* Hero */}
       <div className="relative h-64 bg-primary-black overflow-hidden">
-        {tournament?.image && (
-          <>
-            <img
-              src={tournament.image}
-              alt={tournament.name}
-              className="absolute inset-0 w-full h-full object-cover opacity-40"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/20" />
-          </>
-        )}
+        {(() => {
+          const heroImage = tournament?.image || (tournament?.game && getGameThumbnail(tournament.game));
+          if (heroImage) {
+            return (
+              <>
+                <img
+                  src={heroImage}
+                  alt={tournament?.name || 'Tournament'}
+                  className="absolute inset-0 w-full h-full object-cover opacity-40"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-black/20" />
+              </>
+            );
+          }
+          return null;
+        })()}
         <div className="relative max-w-container mx-auto px-lg h-full flex items-end pb-lg">
           <div className="text-primary-white">
             <div className="flex items-center gap-md mb-2">

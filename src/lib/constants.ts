@@ -16,6 +16,27 @@ export const GAMES_LIST = [
 
 export type GameName = (typeof GAMES_LIST)[number];
 
+// Game thumbnails mapping
+export const GAME_THUMBNAILS: Record<GameName, string> = {
+  'Valorant': '/valorant_thumbnail.jpg',
+  'League of Legends': '/lol_thumbnail.jpg',
+  'Street Fighter 6': '/sf6_thumbnail.jpg',
+  'Call of Duty': '/cod_thumbnail.jpg',
+  'Rocket League': '/rl_thumbnail.jpg',
+  'Mobile Legends': '/mobile_legends.jpg',
+  'Counter-Strike 2': '/cs2.jpg',
+  'Dota 2': '/dota.jpg',
+  'Fortnite': '/fortnite.jpg',
+  'Apex Legends': '/apex.jpg',
+  'Overwatch 2': '/ow.jpg',
+  'Super Smash Bros': '/supersmash.jpg',
+};
+
+// Helper function to get thumbnail for a game
+export function getGameThumbnail(game: string): string | undefined {
+  return GAME_THUMBNAILS[game as GameName];
+}
+
 // Platform options
 export const PLATFORMS = [
   { value: 'pc', label: 'PC' },
