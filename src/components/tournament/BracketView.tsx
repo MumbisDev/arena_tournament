@@ -69,7 +69,7 @@ function MatchCard({ match }: MatchCardProps) {
       {/* Match header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100">
         <span className="text-[10px] uppercase tracking-wide text-neutral-500">
-          Match {match.matchNumber}
+          Match {match.match_number}
         </span>
         <StatusBadge status={match.status} />
       </div>
@@ -78,12 +78,14 @@ function MatchCard({ match }: MatchCardProps) {
       <div className="divide-y divide-neutral-100">
         <ParticipantRow
           participant={match.participant1}
-          isWinner={match.winnerId === match.participant1?.id}
+          score={match.participant1_score}
+          isWinner={match.winner_id === match.participant1?.id}
           isCompleted={isCompleted}
         />
         <ParticipantRow
           participant={match.participant2}
-          isWinner={match.winnerId === match.participant2?.id}
+          score={match.participant2_score}
+          isWinner={match.winner_id === match.participant2?.id}
           isCompleted={isCompleted}
         />
       </div>
@@ -92,12 +94,13 @@ function MatchCard({ match }: MatchCardProps) {
 }
 
 interface ParticipantRowProps {
-  participant: { id: string; name: string; score?: number } | null;
+  participant: { id: string; username: string; avatar?: string } | null | undefined;
+  score: number;
   isWinner: boolean;
   isCompleted: boolean;
 }
 
-function ParticipantRow({ participant, isWinner, isCompleted }: ParticipantRowProps) {
+function ParticipantRow({ participant, score, isWinner, isCompleted }: ParticipantRowProps) {
   if (!participant) {
     return (
       <div className="flex items-center justify-between px-3 py-3">
@@ -120,7 +123,7 @@ function ParticipantRow({ participant, isWinner, isCompleted }: ParticipantRowPr
           ${isWinner && isCompleted ? 'font-medium' : ''}
         `}
       >
-        {participant.name}
+        {participant.username}
       </span>
       <span
         className={`
@@ -128,7 +131,7 @@ function ParticipantRow({ participant, isWinner, isCompleted }: ParticipantRowPr
           ${isWinner && isCompleted ? 'text-semantic-success' : 'text-neutral-600'}
         `}
       >
-        {participant.score ?? '-'}
+        {score ?? '-'}
       </span>
     </div>
   );
@@ -151,7 +154,7 @@ function RoundRobinView({ matches }: RoundRobinViewProps) {
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] uppercase tracking-wide text-neutral-500">
-              Round {match.round} - Match {match.matchNumber}
+              Round {match.round} - Match {match.match_number}
             </span>
             <StatusBadge status={match.status} />
           </div>
@@ -161,20 +164,20 @@ function RoundRobinView({ matches }: RoundRobinViewProps) {
               <span
                 className={`
                   text-sm uppercase tracking-wide
-                  ${match.winnerId === match.participant1?.id ? 'font-medium' : ''}
+                  ${match.winner_id === match.participant1?.id ? 'font-medium' : ''}
                 `}
               >
-                {match.participant1?.name || 'TBD'}
+                {match.participant1?.username || 'TBD'}
               </span>
             </div>
             
             <div className="flex items-center gap-4 px-4">
               <span className="text-lg font-medium w-8 text-center">
-                {match.participant1?.score ?? '-'}
+                {match.participant1_score ?? '-'}
               </span>
               <span className="text-neutral-300">vs</span>
               <span className="text-lg font-medium w-8 text-center">
-                {match.participant2?.score ?? '-'}
+                {match.participant2_score ?? '-'}
               </span>
             </div>
             
@@ -182,10 +185,10 @@ function RoundRobinView({ matches }: RoundRobinViewProps) {
               <span
                 className={`
                   text-sm uppercase tracking-wide
-                  ${match.winnerId === match.participant2?.id ? 'font-medium' : ''}
+                  ${match.winner_id === match.participant2?.id ? 'font-medium' : ''}
                 `}
               >
-                {match.participant2?.name || 'TBD'}
+                {match.participant2?.username || 'TBD'}
               </span>
             </div>
           </div>

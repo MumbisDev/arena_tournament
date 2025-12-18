@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { tournamentService, type Tournament, type CreateTournamentInput } from '../services/tournaments';
+import { tournamentService, type Tournament, type CreateTournamentInput, type UpdateTournamentInput } from '../services/tournaments';
 import type { FilterState } from '../types';
 
 interface TournamentCache {
@@ -29,7 +29,7 @@ interface TournamentState {
   
   // Tournament actions
   createTournament: (data: CreateTournamentInput, organizerId: string) => Promise<Tournament>;
-  updateTournament: (id: string, updates: Partial<CreateTournamentInput>) => Promise<void>;
+  updateTournament: (id: string, updates: UpdateTournamentInput) => Promise<void>;
   deleteTournament: (id: string) => Promise<void>;
   joinTournament: (tournamentId: string, userId: string) => Promise<{ success: boolean; error?: string }>;
   leaveTournament: (tournamentId: string, userId: string) => Promise<void>;

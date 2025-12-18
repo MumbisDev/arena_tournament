@@ -115,16 +115,14 @@ export function Header() {
                     <LayoutDashboard size={14} />
                     Dashboard
                   </Link>
-                  {(user?.role === 'organizer' || user?.role === 'admin') && (
-                    <Link
-                      to="/create-tournament"
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 font-mono text-mono-xs uppercase tracking-wider hover:bg-brutal-vermillion hover:text-brutal-white transition-colors border-b border-neutral-200"
-                    >
-                      <Trophy size={14} />
-                      Create Tournament
-                    </Link>
-                  )}
+                  <Link
+                    to="/create-tournament"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 font-mono text-mono-xs uppercase tracking-wider hover:bg-brutal-vermillion hover:text-brutal-white transition-colors border-b border-neutral-200"
+                  >
+                    <Trophy size={14} />
+                    Create Tournament
+                  </Link>
                   <Link
                     to="/profile/settings"
                     onClick={() => setDropdownOpen(false)}
@@ -191,15 +189,13 @@ export function Header() {
                 >
                   <span className="text-brutal-vermillion mr-2">&gt;</span> Profile
                 </Link>
-                {(user?.role === 'organizer' || user?.role === 'admin') && (
-                  <Link
-                    to="/create-tournament"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="px-lg py-4 font-mono text-mono-sm text-brutal-white uppercase tracking-widest border-b border-neutral-700 hover:bg-brutal-vermillion transition-colors"
-                  >
-                    <span className="text-brutal-vermillion mr-2">&gt;</span> Create Tournament
-                  </Link>
-                )}
+                <Link
+                  to="/create-tournament"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-lg py-4 font-mono text-mono-sm text-brutal-white uppercase tracking-widest border-b border-neutral-700 hover:bg-brutal-vermillion transition-colors"
+                >
+                  <span className="text-brutal-vermillion mr-2">&gt;</span> Create Tournament
+                </Link>
                 <button
                   onClick={() => {
                     handleLogout();

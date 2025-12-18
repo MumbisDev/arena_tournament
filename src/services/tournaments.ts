@@ -21,6 +21,10 @@ export interface CreateTournamentInput {
   image?: string;
 }
 
+export interface UpdateTournamentInput extends Partial<CreateTournamentInput> {
+  status?: 'upcoming' | 'live' | 'completed' | 'cancelled';
+}
+
 export const tournamentService = {
   /**
    * Get all tournaments with organizer info
@@ -79,13 +83,16 @@ export const tournamentService = {
    * Get tournaments for a specific user (created and joined)
    */
   async getUserTournaments(userId: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client = supabase as any;
+    
     const [createdResult, joinedResult] = await Promise.all([
-      supabase
+      client
         .from('tournaments_with_organizer')
         .select('*')
         .eq('organizer_id', userId)
         .order('created_at', { ascending: false }),
-      supabase
+      client
         .from('tournament_participants')
         .select('tournament_id')
         .eq('user_id', userId),
@@ -94,11 +101,11 @@ export const tournamentService = {
     if (createdResult.error) throw createdResult.error;
     if (joinedResult.error) throw joinedResult.error;
 
-    const joinedIds = joinedResult.data?.map((p) => p.tournament_id) || [];
+    const joinedIds = joinedResult.data?.map((p: { tournament_id: string }) => p.tournament_id) || [];
     
     let joined: Tournament[] = [];
     if (joinedIds.length > 0) {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from('tournaments_with_organizer')
         .select('*')
         .in('id', joinedIds)
@@ -118,7 +125,8 @@ export const tournamentService = {
    * Create a new tournament
    */
   async createTournament(input: CreateTournamentInput, organizerId: string): Promise<Tournament> {
-    const { data, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from('tournaments')
       .insert({
         ...input,
@@ -138,8 +146,9 @@ export const tournamentService = {
   /**
    * Update a tournament
    */
-  async updateTournament(id: string, updates: Partial<CreateTournamentInput>) {
-    const { data, error } = await supabase
+  async updateTournament(id: string, updates: UpdateTournamentInput) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from('tournaments')
       .update(updates)
       .eq('id', id)
@@ -179,7 +188,8 @@ export const tournamentService = {
    * Join a tournament
    */
   async joinTournament(tournamentId: string, userId: string) {
-    const { error } = await supabase.from('tournament_participants').insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from('tournament_participants').insert({
       tournament_id: tournamentId,
       user_id: userId,
     });
@@ -242,7 +252,8 @@ export const tournamentService = {
       updateData.completed_at = new Date().toISOString();
     }
 
-    const { data, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from('matches')
       .update(updateData)
       .eq('id', matchId)

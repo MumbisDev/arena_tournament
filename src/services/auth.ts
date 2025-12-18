@@ -71,7 +71,8 @@ export const authService = {
    * Update the current user's profile
    */
   async updateProfile(userId: string, updates: { username?: string; avatar?: string; bio?: string }) {
-    const { data, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
       .from('profiles')
       .update(updates)
       .eq('id', userId)

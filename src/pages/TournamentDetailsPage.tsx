@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, Trophy, User, Clock, Settings } from 'lucide-react';
 import { Layout, Breadcrumbs } from '../components/layout';
 import { Button } from '../components/ui/Button';
@@ -15,7 +15,6 @@ type Tab = 'overview' | 'bracket' | 'participants' | 'rules';
 
 export function TournamentDetailsPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
   const { joinTournament, leaveTournament, getCachedTournament, prefetchTournament } = useTournamentStore();
 

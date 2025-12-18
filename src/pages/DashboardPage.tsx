@@ -8,8 +8,9 @@ import { StatusBadge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useAuthStore } from '../store/authStore';
 import { useTournamentStore } from '../store/tournamentStore';
-import { tournamentService, type Match } from '../services/tournaments';
+import { tournamentService } from '../services/tournaments';
 import type { Tournament } from '../services/tournaments';
+import type { Match } from '../types';
 
 export function DashboardPage() {
   const { user } = useAuthStore();

@@ -1,6 +1,6 @@
 import { type ButtonHTMLAttributes, forwardRef } from 'react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'text';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -34,6 +34,11 @@ const variantStyles: Record<ButtonVariant, string> = {
     active:translate-x-[4px] active:translate-y-[4px]
     disabled:bg-neutral-300 disabled:text-neutral-500 disabled:border-neutral-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
   `,
+  text: `
+    bg-transparent text-brutal-black border-none
+    hover:text-brutal-vermillion
+    disabled:text-neutral-400 disabled:cursor-not-allowed
+  `,
 };
 
 const shadowStyles: Record<ButtonVariant, string> = {
@@ -41,6 +46,7 @@ const shadowStyles: Record<ButtonVariant, string> = {
   secondary: '4px 4px 0px 0px #0A0A0A',
   ghost: 'none',
   danger: '4px 4px 0px 0px #0A0A0A',
+  text: 'none',
 };
 
 const shadowHoverStyles: Record<ButtonVariant, string> = {
@@ -48,6 +54,7 @@ const shadowHoverStyles: Record<ButtonVariant, string> = {
   secondary: '2px 2px 0px 0px #0A0A0A',
   ghost: 'none',
   danger: '2px 2px 0px 0px #0A0A0A',
+  text: 'none',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -75,12 +82,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ...style,
         }}
         onMouseEnter={(e) => {
-          if (!isDisabled && variant !== 'ghost') {
+          if (!isDisabled && variant !== 'ghost' && variant !== 'text') {
             e.currentTarget.style.boxShadow = shadowHoverStyles[variant];
           }
         }}
         onMouseLeave={(e) => {
-          if (!isDisabled && variant !== 'ghost') {
+          if (!isDisabled && variant !== 'ghost' && variant !== 'text') {
             e.currentTarget.style.boxShadow = shadowStyles[variant];
           }
         }}
